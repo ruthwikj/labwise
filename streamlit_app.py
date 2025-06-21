@@ -4,10 +4,59 @@ import PyPDF2
 import docx
 import os
 
+# ---- Custom CSS for colors and style ----
+st.markdown(
+    """
+    <style>
+    /* Page background */
+    .reportview-container {
+        background: #f0f4f8;
+    }
+    /* Header style */
+    .css-1v3fvcr h1 {
+        color: #1a73e8;  /* Google Blue */
+        font-weight: 700;
+    }
+    /* Subtitle */
+    .css-1v3fvcr p {
+        color: #555555;
+        font-size: 18px;
+    }
+    /* Text area */
+    textarea {
+        border: 2px solid #1a73e8 !important;
+        border-radius: 8px !important;
+        font-size: 16px;
+        padding: 8px !important;
+    }
+    /* Button style */
+    div.stButton > button {
+        background-color: #1a73e8;
+        color: white;
+        font-weight: 600;
+        padding: 10px 24px;
+        border-radius: 8px;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+    div.stButton > button:hover {
+        background-color: #155ab6;
+        cursor: pointer;
+    }
+    /* Answer text */
+    .stMarkdown p {
+        font-size: 18px;
+        color: #333333;
+        font-weight: 500;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("LabWise")
 st.write("Upload your lab results (txt, md, pdf, docx) and ask a question about them.")
 
-# Load API key
 ANTHROPIC_API_KEY = st.secrets.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY")
 if not ANTHROPIC_API_KEY:
     st.error("Anthropic API key not found.")
@@ -34,10 +83,8 @@ question = st.text_area(
     disabled=not uploaded_file,
 )
 
-# ✅ Add a submit button
 submit = st.button("Submit")
 
-# Process only when the button is clicked
 if submit and uploaded_file and question:
     file_ext = uploaded_file.name.split(".")[-1].lower()
     text = extract_text(uploaded_file, file_ext)
