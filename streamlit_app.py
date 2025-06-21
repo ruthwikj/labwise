@@ -4,7 +4,7 @@ import PyPDF2
 import docx
 import os
 
-st.title("LabWise")
+st.title("LABWISE")
 st.write("Upload your lab results (txt, md, pdf, docx) and ask a question about them.")
 
 # Load your Anthropic key from secrets or environment variable
