@@ -7,11 +7,10 @@ import os
 st.title("LabWise")
 st.write("Upload your lab results (txt, md, pdf, docx) and ask a question about them.")
 
-# Load your Anthropic key from secrets or environment variable
+# Load API key
 ANTHROPIC_API_KEY = st.secrets.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY")
-
 if not ANTHROPIC_API_KEY:
-    st.error("Anthropic API key not found. Please set it in Streamlit secrets or environment variables.")
+    st.error("Anthropic API key not found.")
     st.stop()
 
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -35,13 +34,17 @@ question = st.text_area(
     disabled=not uploaded_file,
 )
 
-if uploaded_file and question:
+# ✅ Add a submit button
+submit = st.button("Submit")
+
+# Process only when the button is clicked
+if submit and uploaded_file and question:
     file_ext = uploaded_file.name.split(".")[-1].lower()
     text = extract_text(uploaded_file, file_ext)
 
     with st.spinner("Analyzing with Claude 3 Haiku..."):
         response = client.messages.create(
-            model="claude-3-haiku",  # ✅ Claude 3 Haiku model
+            model="claude-3-haiku",
             max_tokens=1000,
             temperature=0.5,
             messages=[
