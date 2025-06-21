@@ -7,7 +7,7 @@ st.title("LabWise")
 
 st.write("Upload your lab results below (txt, md, pdf, docx) and ask a question about it.")
 
-ANTHROPIC_API_KEY = "sk-your-anthropic-api-key"  # Replace with your key or use env/secrets
+ANTHROPIC_API_KEY = "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"  # Replace with your key or use env/secrets
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
 uploaded_file = st.file_uploader(
