@@ -4,34 +4,12 @@ import PyPDF2
 import docx
 import os
 
-# --- Custom CSS ---
+# --- Minimal CSS: green submit button ---
 st.markdown(
     """
     <style>
-    /* Background */
-    .reportview-container {
-        background: #f0f4f8;
-    }
-    /* Header */
-    .css-1v3fvcr h1 {
-        color: #1a73e8;
-        font-weight: 700;
-    }
-    /* Subtitle */
-    .css-1v3fvcr p {
-        color: #555555;
-        font-size: 18px;
-    }
-    /* Text area */
-    textarea {
-        border: 2px solid #1a73e8 !important;
-        border-radius: 8px !important;
-        font-size: 16px;
-        padding: 8px !important;
-    }
-    /* Green submit button */
     div.stButton > button {
-        background-color: #28a745;
+        background-color: #28a745;  /* Green */
         color: white;
         font-weight: 600;
         padding: 10px 24px;
@@ -43,23 +21,11 @@ st.markdown(
         background-color: #1e7e34;
         cursor: pointer;
     }
-    /* Answer */
-    .stMarkdown p {
-        font-size: 18px;
-        color: #333333;
-        font-weight: 500;
-    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- Sidebar ---
-st.sidebar.title("LabWise Settings")
-max_tokens = st.sidebar.slider("Max tokens", 100, 2000, 1000, step=100)
-temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.5, step=0.05)
-
-# --- Main app ---
 st.title("LabWise")
 st.write("Upload your lab results (txt, md, pdf, docx) and ask a question about them.")
 
@@ -70,20 +36,7 @@ if not ANTHROPIC_API_KEY:
 
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
-# Layout with two columns
-col1, col2 = st.columns([2, 3])
-
-with col1:
-    uploaded_file = st.file_uploader("Upload a document", type=["txt", "md", "pdf", "docx"])
-
-with col2:
-    question = st.text_area(
-        "Ask a question about the document:",
-        placeholder="E.g., Can you summarize the key points?",
-        disabled=not uploaded_file,
-        height=150
-    )
-    submit = st.button("Submit")
+uploaded_file = st.file_uploader("Upload a document", type=["txt", "md", "pdf", "docx"])
 
 def extract_text(file, file_type):
     if file_type in ["txt", "md"]:
@@ -96,24 +49,27 @@ def extract_text(file, file_type):
         return "\n".join([para.text for para in doc.paragraphs])
     return ""
 
-if submit:
-    if not uploaded_file:
-        st.warning("Please upload a document first.")
-    elif not question.strip():
-        st.warning("Please enter a question about the document.")
-    else:
-        file_ext = uploaded_file.name.split(".")[-1].lower()
-        text = extract_text(uploaded_file, file_ext)
+question = st.text_area(
+    "Now ask a question about the document!",
+    placeholder="Can you give me a short summary?",
+    disabled=not uploaded_file,
+)
 
-        with st.spinner("Analyzing with Claude 3 Haiku..."):
-            response = client.messages.create(
-                model="claude-3-haiku",
-                max_tokens=max_tokens,
-                temperature=temperature,
-                messages=[
-                    {"role": "user", "content": f"Here's a document:\n{text}\n\nQuestion: {question}"}
-                ]
-            )
+submit = st.button("Submit")
 
-        st.subheader("Answer")
-        st.write(response.content[0].text)
+if submit and uploaded_file and question:
+    file_ext = uploaded_file.name.split(".")[-1].lower()
+    text = extract_text(uploaded_file, file_ext)
+
+    with st.spinner("Analyzing with Claude 3 Haiku..."):
+        response = client.messages.create(
+            model="claude-3-haiku",
+            max_tokens=1000,
+            temperature=0.5,
+            messages=[
+                {"role": "user", "content": f"Here's a document:\n{text}\n\nQuestion: {question}"}
+            ]
+        )
+
+    st.subheader("Answer")
+    st.write(response.content[0].text)
