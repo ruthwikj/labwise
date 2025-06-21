@@ -57,17 +57,18 @@ question = st.text_area(
 
 submit = st.button("Submit")
 
-if submit and uploaded_file and question:
+if uploaded_file and question:
     file_ext = uploaded_file.name.split(".")[-1].lower()
     text = extract_text(uploaded_file, file_ext)
 
     with st.spinner("Analyzing with Claude 3 Haiku..."):
         response = client.messages.create(
-            model="claude-3-haiku",
+            model="claude-3-haiku-20240307",
             max_tokens=1000,
             temperature=0.5,
+            system=f"You are analyzing the following document:\n\n{text}",
             messages=[
-                {"role": "user", "content": f"Here's a document:\n{text}\n\nQuestion: {question}"}
+                {"role": "user", "content": question}
             ]
         )
 
