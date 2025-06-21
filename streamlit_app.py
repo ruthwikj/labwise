@@ -41,7 +41,7 @@ if uploaded_file and question:
 
     with st.spinner("Analyzing with Claude 3 Haiku..."):
         response = client.messages.create(
-            model="claude-3-haiku-20240306",  # ✅ Claude 3 Haiku model
+            model="claude-3-haiku",  # ✅ Claude 3 Haiku model
             max_tokens=1000,
             temperature=0.5,
             messages=[
