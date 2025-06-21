@@ -1,6 +1,6 @@
-# 📄 Document question answering template
+# 📄 LabWise
 
-A simple Streamlit app that answers questions about an uploaded document via OpenAI's GPT-3.5.
+A simple app that analyzies medical lab reports and helps patients understand their report. 
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://document-question-answering-template.streamlit.app/)
 
