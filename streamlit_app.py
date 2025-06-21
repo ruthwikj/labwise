@@ -1,35 +1,33 @@
 import streamlit as st
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from anthropic import Anthropic
 import PyPDF2
 import docx
+import os
 
 st.title("LabWise")
+st.write("Upload your lab results (txt, md, pdf, docx) and ask a question about them.")
 
-st.write("Upload your lab results below (txt, md, pdf, docx) and ask a question about it.")
+# Load your Anthropic key from secrets or environment variable
+ANTHROPIC_API_KEY = st.secrets.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY")
 
-ANTHROPIC_API_KEY = st.secrets.get("anthropic_api_key")  # Replace with your key or use env/secrets
+if not ANTHROPIC_API_KEY:
+    st.error("Anthropic API key not found. Please set it in Streamlit secrets or environment variables.")
+    st.stop()
+
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
-uploaded_file = st.file_uploader(
-    "Upload a document",
-    type=["txt", "md", "pdf", "docx"]
-)
+uploaded_file = st.file_uploader("Upload a document", type=["txt", "md", "pdf", "docx"])
 
 def extract_text(file, file_type):
     if file_type in ["txt", "md"]:
         return file.read().decode()
     elif file_type == "pdf":
         pdf_reader = PyPDF2.PdfReader(file)
-        text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
-        return text
+        return "\n".join([page.extract_text() or "" for page in pdf_reader.pages])
     elif file_type == "docx":
         doc = docx.Document(file)
-        text = "\n".join([para.text for para in doc.paragraphs])
-        return text
-    else:
-        return ""
+        return "\n".join([para.text for para in doc.paragraphs])
+    return ""
 
 question = st.text_area(
     "Now ask a question about the document!",
@@ -38,33 +36,18 @@ question = st.text_area(
 )
 
 if uploaded_file and question:
-    file_type = uploaded_file.type.split("/")[-1]  # crude way to detect type, might vary
-    # fallback: use extension if mimetype is inconsistent
-    if not file_type or file_type not in ["plain", "pdf", "vnd.openxmlformats-officedocument.wordprocessingml.document"]:
-        if uploaded_file.name.endswith(".txt"):
-            file_type = "txt"
-        elif uploaded_file.name.endswith(".md"):
-            file_type = "md"
-        elif uploaded_file.name.endswith(".docx"):
-            file_type = "docx"
-        elif uploaded_file.name.endswith(".pdf"):
-            file_type = "pdf"
+    file_ext = uploaded_file.name.split(".")[-1].lower()
+    text = extract_text(uploaded_file, file_ext)
 
-    text = extract_text(uploaded_file, file_type)
+    with st.spinner("Analyzing with Claude 3 Haiku..."):
+        response = client.messages.create(
+            model="claude-3-haiku-20240306",  # ✅ Claude 3 Haiku model
+            max_tokens=1000,
+            temperature=0.5,
+            messages=[
+                {"role": "user", "content": f"Here's a document:\n{text}\n\nQuestion: {question}"}
+            ]
+        )
 
-    prompt = (
-        HUMAN_PROMPT
-        + f"Here's a document: {text} \n\n---\n\n {question}"
-        + AI_PROMPT
-    )
-
-    response = client.completions.create(
-        model="claude-2",
-        prompt=prompt,
-        max_tokens_to_sample=1000,
-        temperature=0.7,
-    )
-
-    st.subheader("Explanation")
-    st.write(response.completion)
-
+    st.subheader("Answer")
+    st.write(response.content[0].text)
